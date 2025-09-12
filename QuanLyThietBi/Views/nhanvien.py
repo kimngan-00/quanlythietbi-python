@@ -3,13 +3,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
 from ..controllers.nhanvien_controller import NhanVienController
+from ..decorators import jwt_required, admin_required, check_role
 
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@jwt_required
 def get_nhanvien_list(request):
     """
-    API endpoint lấy danh sách nhân viên
+    API endpoint lấy danh sách nhân viên (yêu cầu JWT token)
     """
     try:
         # Sử dụng controller để lấy danh sách nhân viên
@@ -33,9 +35,10 @@ def get_nhanvien_list(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@jwt_required
 def get_nhanvien_by_id(request, ma_nhan_vien):
     """
-    API endpoint lấy thông tin nhân viên theo mã
+    API endpoint lấy thông tin nhân viên theo mã (yêu cầu JWT token)
     """
     try:
         result = NhanVienController.get_nhanvien_by_id(ma_nhan_vien)
@@ -58,9 +61,10 @@ def get_nhanvien_by_id(request, ma_nhan_vien):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@admin_required  # Yêu cầu quyền admin
 def create_nhanvien(request):
     """
-    API endpoint tạo nhân viên mới
+    API endpoint tạo nhân viên mới (yêu cầu quyền admin)
     """
     try:
         data = json.loads(request.body)
@@ -114,9 +118,10 @@ def create_nhanvien(request):
 
 @csrf_exempt
 @require_http_methods(["PUT"])
+@check_role(['ADMIN', 'MANAGER'])  # Yêu cầu quyền admin hoặc manager
 def update_nhanvien(request, ma_nhan_vien):
     """
-    API endpoint cập nhật nhân viên
+    API endpoint cập nhật nhân viên (yêu cầu quyền admin hoặc manager)
     """
     try:
         data = json.loads(request.body)
@@ -152,9 +157,10 @@ def update_nhanvien(request, ma_nhan_vien):
 
 @csrf_exempt
 @require_http_methods(["DELETE"])
+@admin_required  # Yêu cầu quyền admin
 def delete_nhanvien(request, ma_nhan_vien):
     """
-    API endpoint xóa nhân viên
+    API endpoint xóa nhân viên (yêu cầu quyền admin)
     """
     try:
         result = NhanVienController.delete_nhanvien(ma_nhan_vien)
@@ -177,9 +183,10 @@ def delete_nhanvien(request, ma_nhan_vien):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@jwt_required
 def search_nhanvien(request):
     """
-    API endpoint tìm kiếm nhân viên
+    API endpoint tìm kiếm nhân viên (yêu cầu JWT token)
     """
     try:
         keyword = request.GET.get("keyword", "")
@@ -209,9 +216,10 @@ def search_nhanvien(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@jwt_required
 def get_nhanvien_by_phongban(request, ma_phong_ban):
     """
-    API endpoint lấy danh sách nhân viên theo phòng ban
+    API endpoint lấy danh sách nhân viên theo phòng ban (yêu cầu JWT token)
     """
     try:
         result = NhanVienController.get_nhanvien_by_phongban(ma_phong_ban)
@@ -236,7 +244,7 @@ def get_nhanvien_by_phongban(request, ma_phong_ban):
 @require_http_methods(["POST"])
 def authenticate_nhanvien(request):
     """
-    API endpoint xác thực nhân viên (đăng nhập)
+    API endpoint xác thực nhân viên (đăng nhập) - Không cần JWT token
     """
     try:
         data = json.loads(request.body)

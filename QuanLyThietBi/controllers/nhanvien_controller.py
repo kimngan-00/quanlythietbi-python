@@ -2,6 +2,7 @@ from django.db import connection
 from django.http import JsonResponse
 import json
 import hashlib
+from ..utils import JWTUtils
 
 class NhanVienController:
     """
@@ -113,7 +114,6 @@ class NhanVienController:
                 """)
                 count = cursor.fetchone()[0]
                 ma_nhan_vien = f"NV{count:04d}"
-                print('role in 117: ------------------------------',  role)
                 # Hash password
                 password_hash = hashlib.sha256(password.encode()).hexdigest()
                 
@@ -345,7 +345,7 @@ class NhanVienController:
     @staticmethod
     def authenticate_nhanvien(email, password):
         """
-        Xác thực nhân viên
+        Xác thực nhân viên và trả về JWT token
         """
         try:
             with connection.cursor() as cursor:
@@ -363,20 +363,37 @@ class NhanVienController:
                 result = cursor.fetchone()
                 
                 if result:
-                    return {
-                        'success': True,
-                        'data': {
-                            'maNhanVien': result[0],
-                            'tenNhanVien': result[1],
-                            'email': result[2],
-                            'soDienThoai': result[3] if result[3] else '',
-                            'role': result[4],
-                            'maPhongBan': result[5],
-                            'tenPhongBan': result[6] if result[6] else '',
-                            'ngayTao': result[7].strftime('%Y-%m-%d %H:%M:%S') if result[7] else ''
-                        },
-                        'message': 'Xác thực thành công'
+                    # Tạo user data
+                    user_data = {
+                        'maNhanVien': result[0],
+                        'tenNhanVien': result[1],
+                        'email': result[2],
+                        'soDienThoai': result[3] if result[3] else '',
+                        'role': result[4],
+                        'maPhongBan': result[5],
+                        'tenPhongBan': result[6] if result[6] else '',
+                        'ngayTao': result[7].strftime('%Y-%m-%d %H:%M:%S') if result[7] else ''
                     }
+                    
+                    # Tạo JWT token
+                    token_result = JWTUtils.generate_token(user_data)
+                    
+                    if token_result['success']:
+                        return {
+                            'success': True,
+                            'data': {
+                                'user': user_data,
+                                'token': token_result['token'],
+                                'expires_in': token_result['expires_in']
+                            },
+                            'message': 'Đăng nhập thành công'
+                        }
+                    else:
+                        return {
+                            'success': False,
+                            'data': None,
+                            'message': token_result['error']
+                        }
                 else:
                     return {
                         'success': False,
