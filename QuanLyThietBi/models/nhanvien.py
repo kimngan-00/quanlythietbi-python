@@ -100,6 +100,6 @@ class NhanVien(models.Model):
                     CHARACTER SET = utf8mb4 
                     COLLATE = utf8mb4_0900_ai_ci
                 """)
-                print("✅ Đã tạo bảng NhanVien thành công!")
+                print("Đã tạo bảng NhanVien thành công!")
             else:
-                print("ℹ️ Bảng NhanVien đã tồn tại!")
+                print("Bảng NhanVien đã tồn tại!")
