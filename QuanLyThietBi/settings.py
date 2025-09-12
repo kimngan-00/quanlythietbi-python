@@ -56,7 +56,7 @@ WSGI_APPLICATION = 'QuanLyThietBi.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'device_management',
+        'NAME': 'quanlythietbi',
         'USER': 'root',
         'PASSWORD': '12345678',
         'HOST': 'localhost',

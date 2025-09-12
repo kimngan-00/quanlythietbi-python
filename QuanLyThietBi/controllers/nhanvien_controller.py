@@ -1,6 +1,7 @@
 from django.db import connection
 from django.http import JsonResponse
 import json
+import hashlib
 
 class NhanVienController:
     """
@@ -25,7 +26,6 @@ class NhanVienController:
                 
                 # Lấy tất cả kết quả
                 results = cursor.fetchall()
-                print('results: ------------------------------', results)
                 
                 # Chuyển đổi thành danh sách dictionary
                 nhanvien_list = []
@@ -50,7 +50,7 @@ class NhanVienController:
         except Exception as e:
             return {
                 'success': False,
-                'data': [],
+                'data': None,
                 'message': f'Lỗi khi lấy danh sách nhân viên: {str(e)}'
             }
     
@@ -59,7 +59,6 @@ class NhanVienController:
         """
         Lấy thông tin nhân viên theo mã
         """
-        print('ma_nhan_vien: ------------------------------', ma_nhan_vien)
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
@@ -102,7 +101,7 @@ class NhanVienController:
             }
     
     @staticmethod
-    def create_nhanvien(ten_nhan_vien, email, so_dien_thoai=None, role='STAFF', ma_phong_ban=None):
+    def create_nhanvien(ten_nhan_vien, email, password,ma_phong_ban, role='STAFF', so_dien_thoai=''):
         """
         Tạo nhân viên mới
         """
@@ -114,12 +113,15 @@ class NhanVienController:
                 """)
                 count = cursor.fetchone()[0]
                 ma_nhan_vien = f"NV{count:04d}"
+                print('role in 117: ------------------------------',  role)
+                # Hash password
+                password_hash = hashlib.sha256(password.encode()).hexdigest()
                 
                 # Thêm nhân viên mới
                 cursor.execute("""
-                    INSERT INTO NhanVien (maNhanVien, tenNhanVien, email, soDienThoai, role, maPhongBan) 
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, [ma_nhan_vien, ten_nhan_vien, email, so_dien_thoai, role, ma_phong_ban])
+                    INSERT INTO NhanVien (maNhanVien, tenNhanVien, email, password, soDienThoai, role, maPhongBan) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, [ma_nhan_vien, ten_nhan_vien, email, password_hash, so_dien_thoai, role, ma_phong_ban])
                 
                 return {
                     'success': True,
@@ -142,17 +144,14 @@ class NhanVienController:
             }
     
     @staticmethod
-    def update_nhanvien(ma_nhan_vien, ten_nhan_vien=None, email=None, so_dien_thoai=None, role=None, ma_phong_ban=None):
+    def update_nhanvien(ma_nhan_vien, ten_nhan_vien=None, email=None, password=None, so_dien_thoai=None, role=None, ma_phong_ban=None):
         """
         Cập nhật thông tin nhân viên
         """
         try:
             with connection.cursor() as cursor:
                 # Kiểm tra nhân viên có tồn tại không
-                cursor.execute("""
-                    SELECT COUNT(*) FROM NhanVien WHERE maNhanVien = %s
-                """, [ma_nhan_vien])
-                
+                cursor.execute("SELECT COUNT(*) FROM NhanVien WHERE maNhanVien = %s", [ma_nhan_vien])
                 if cursor.fetchone()[0] == 0:
                     return {
                         'success': False,
@@ -160,41 +159,54 @@ class NhanVienController:
                         'message': 'Không tìm thấy nhân viên'
                     }
                 
-                # Cập nhật thông tin
+                # Xây dựng câu lệnh UPDATE động
                 update_fields = []
-                params = []
+                update_values = []
                 
                 if ten_nhan_vien is not None:
                     update_fields.append("tenNhanVien = %s")
-                    params.append(ten_nhan_vien)
+                    update_values.append(ten_nhan_vien)
                 
                 if email is not None:
                     update_fields.append("email = %s")
-                    params.append(email)
+                    update_values.append(email)
+                
+                if password is not None:
+                    password_hash = hashlib.sha256(password.encode()).hexdigest()
+                    update_fields.append("password = %s")
+                    update_values.append(password_hash)
                 
                 if so_dien_thoai is not None:
                     update_fields.append("soDienThoai = %s")
-                    params.append(so_dien_thoai)
+                    update_values.append(so_dien_thoai)
                 
                 if role is not None:
                     update_fields.append("role = %s")
-                    params.append(role)
+                    update_values.append(role)
                 
                 if ma_phong_ban is not None:
                     update_fields.append("maPhongBan = %s")
-                    params.append(ma_phong_ban)
+                    update_values.append(ma_phong_ban)
                 
-                if update_fields:
-                    params.append(ma_nhan_vien)
-                    cursor.execute(f"""
-                        UPDATE NhanVien 
-                        SET {', '.join(update_fields)}
-                        WHERE maNhanVien = %s
-                    """, params)
+                if not update_fields:
+                    return {
+                        'success': False,
+                        'data': None,
+                        'message': 'Không có thông tin nào để cập nhật'
+                    }
+                
+                # Thêm ma_nhan_vien vào cuối danh sách values
+                update_values.append(ma_nhan_vien)
+                
+                # Thực hiện cập nhật
+                sql = f"UPDATE NhanVien SET {', '.join(update_fields)} WHERE maNhanVien = %s"
+                cursor.execute(sql, update_values)
                 
                 return {
                     'success': True,
-                    'data': {'maNhanVien': ma_nhan_vien},
+                    'data': {
+                        'maNhanVien': ma_nhan_vien
+                    },
                     'message': 'Cập nhật nhân viên thành công'
                 }
                 
@@ -213,10 +225,7 @@ class NhanVienController:
         try:
             with connection.cursor() as cursor:
                 # Kiểm tra nhân viên có tồn tại không
-                cursor.execute("""
-                    SELECT COUNT(*) FROM NhanVien WHERE maNhanVien = %s
-                """, [ma_nhan_vien])
-                
+                cursor.execute("SELECT COUNT(*) FROM NhanVien WHERE maNhanVien = %s", [ma_nhan_vien])
                 if cursor.fetchone()[0] == 0:
                     return {
                         'success': False,
@@ -225,13 +234,13 @@ class NhanVienController:
                     }
                 
                 # Xóa nhân viên
-                cursor.execute("""
-                    DELETE FROM NhanVien WHERE maNhanVien = %s
-                """, [ma_nhan_vien])
+                cursor.execute("DELETE FROM NhanVien WHERE maNhanVien = %s", [ma_nhan_vien])
                 
                 return {
                     'success': True,
-                    'data': {'maNhanVien': ma_nhan_vien},
+                    'data': {
+                        'maNhanVien': ma_nhan_vien
+                    },
                     'message': 'Xóa nhân viên thành công'
                 }
                 
@@ -254,9 +263,12 @@ class NhanVienController:
                            nv.role, nv.maPhongBan, pb.tenPhongBan, nv.ngayTao
                     FROM NhanVien nv
                     LEFT JOIN PhongBan pb ON nv.maPhongBan = pb.maPhongBan
-                    WHERE nv.tenNhanVien LIKE %s OR nv.email LIKE %s OR pb.tenPhongBan LIKE %s
+                    WHERE nv.tenNhanVien LIKE %s 
+                       OR nv.email LIKE %s 
+                       OR nv.maNhanVien LIKE %s
+                       OR pb.tenPhongBan LIKE %s
                     ORDER BY nv.maNhanVien
-                """, [f'%{keyword}%', f'%{keyword}%', f'%{keyword}%'])
+                """, [f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%'])
                 
                 results = cursor.fetchall()
                 
@@ -282,7 +294,7 @@ class NhanVienController:
         except Exception as e:
             return {
                 'success': False,
-                'data': [],
+                'data': None,
                 'message': f'Lỗi khi tìm kiếm nhân viên: {str(e)}'
             }
     
@@ -320,12 +332,61 @@ class NhanVienController:
                 return {
                     'success': True,
                     'data': nhanvien_list,
-                    'message': f'Lấy danh sách nhân viên phòng ban thành công'
+                    'message': f'Lấy danh sách nhân viên phòng ban {ma_phong_ban} thành công'
                 }
                 
         except Exception as e:
             return {
                 'success': False,
-                'data': [],
-                'message': f'Lỗi khi lấy danh sách nhân viên phòng ban: {str(e)}'
+                'data': None,
+                'message': f'Lỗi khi lấy danh sách nhân viên theo phòng ban: {str(e)}'
+            }
+    
+    @staticmethod
+    def authenticate_nhanvien(email, password):
+        """
+        Xác thực nhân viên
+        """
+        try:
+            with connection.cursor() as cursor:
+                # Hash password để so sánh
+                password_hash = hashlib.sha256(password.encode()).hexdigest()
+                
+                cursor.execute("""
+                    SELECT nv.maNhanVien, nv.tenNhanVien, nv.email, nv.soDienThoai, 
+                           nv.role, nv.maPhongBan, pb.tenPhongBan, nv.ngayTao
+                    FROM NhanVien nv
+                    LEFT JOIN PhongBan pb ON nv.maPhongBan = pb.maPhongBan
+                    WHERE nv.email = %s AND nv.password = %s
+                """, [email, password_hash])
+                
+                result = cursor.fetchone()
+                
+                if result:
+                    return {
+                        'success': True,
+                        'data': {
+                            'maNhanVien': result[0],
+                            'tenNhanVien': result[1],
+                            'email': result[2],
+                            'soDienThoai': result[3] if result[3] else '',
+                            'role': result[4],
+                            'maPhongBan': result[5],
+                            'tenPhongBan': result[6] if result[6] else '',
+                            'ngayTao': result[7].strftime('%Y-%m-%d %H:%M:%S') if result[7] else ''
+                        },
+                        'message': 'Xác thực thành công'
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'data': None,
+                        'message': 'Email hoặc mật khẩu không đúng'
+                    }
+                    
+        except Exception as e:
+            return {
+                'success': False,
+                'data': None,
+                'message': f'Lỗi khi xác thực nhân viên: {str(e)}'
             }

@@ -91,6 +91,7 @@ class NhanVien(models.Model):
                             CHARACTER SET utf8mb4 
                             COLLATE utf8mb4_0900_ai_ci NOT NULL,
                         email VARCHAR(255) UNIQUE NOT NULL,
+                        password VARCHAR(255) NOT NULL,
                         soDienThoai VARCHAR(20),
                         role ENUM('ADMIN', 'STAFF') NOT NULL DEFAULT 'STAFF',
                         maPhongBan VARCHAR(20) NOT NULL,
