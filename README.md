@@ -1,6 +1,6 @@
 # API Hello World
 
-Một API đơn giản trả về "hello world" được xây dựng bằng Flask.
+Một API đơn giản trả về "hello world" được xây dựng bằng Django.
 
 ## Cài đặt
 
@@ -11,7 +11,7 @@ pip install -r requirements.txt
 
 2. Chạy ứng dụng:
 ```bash
-python app.py
+python manage.py runserver
 ```
 
 API sẽ chạy tại: `http://localhost:3000`
@@ -25,25 +25,12 @@ API sẽ chạy tại: `http://localhost:3000`
 
 ### Lấy hello world
 ```bash
-curl http://localhost:3000/api/hello
+curl http://localhost:8000/api/hello
 ```
 
 Response:
 ```json
 {
   "message": "hello world"
-}
-```
-
-### Kiểm tra health
-```bash
-curl http://localhost:3000/api/health
-```
-
-Response:
-```json
-{
-  "status": "ok",
-  "message": "API đang hoạt động"
 }
 ```
