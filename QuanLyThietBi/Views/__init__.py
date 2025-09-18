@@ -15,3 +15,6 @@ __all__ = [
     'delete_phongban',
     'search_phongban'
 ]
+
+from . import admin_views
+from . import staff_views

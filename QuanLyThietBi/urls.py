@@ -1,31 +1,19 @@
-"""
-URL configuration for QuanLyThietBi project.
-"""
-from django.contrib import admin
-from django.urls import path, include
-from . import views
+from django.urls import path
+from .controllers import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    
-    # Hello World API
-    path('api/hello/', views.hello_world, name='hello_world'),
-    
-    # PhongBan APIs
-    path('api/phongban/', views.get_phongban_list, name='phongban_list'),
-    path('api/phongban/create/', views.create_phongban, name='create_phongban'),
-    path('api/phongban/<str:ma_phong_ban>/', views.get_phongban_by_id, name='phongban_detail'),
-    path('api/phongban/<str:ma_phong_ban>/update/', views.update_phongban, name='update_phongban'),
-    path('api/phongban/<str:ma_phong_ban>/delete/', views.delete_phongban, name='delete_phongban'),
-    path('api/phongban/search/', views.search_phongban, name='search_phongban'),
-    
-    # NhanVien APIs
-    path('api/nhanvien/', views.get_nhanvien_list, name='nhanvien_list'),
-    path('api/nhanvien/create/', views.create_nhanvien, name='create_nhanvien'),
-    path('api/nhanvien/auth/', views.authenticate_nhanvien, name='authenticate_nhanvien'),
-    path('api/nhanvien/search/', views.search_nhanvien, name='search_nhanvien'),
-    path('api/nhanvien/phongban/<str:ma_phong_ban>/', views.get_nhanvien_by_phongban, name='nhanvien_by_phongban'),
-    path('api/nhanvien/<str:ma_nhan_vien>/', views.get_nhanvien_by_id, name='nhanvien_detail'),
-    path('api/nhanvien/<str:ma_nhan_vien>/update/', views.update_nhanvien, name='update_nhanvien'),
-    path('api/nhanvien/<str:ma_nhan_vien>/delete/', views.delete_nhanvien, name='delete_nhanvien'),
-   ]
+    # Chức năng chung cho cả Admin và Nhân viên
+    path('devices/', views.list_all_devices, name='list-all-devices'),
+
+    # Chức năng của ADMIN
+    path('admin/devices/create/', views.create_device, name='admin-create-device'),
+    path('admin/devices/update/<str:maTB>/', views.update_device, name='admin-update-device'),
+    path('admin/devices/in-use/', views.list_devices_in_use, name='admin-list-devices-in-use'),
+    path('admin/requests/', views.list_all_requests, name='admin-list-all-requests'),
+    path('admin/requests/approve/<str:maYC>/', views.approve_request, name='admin-approve-request'),
+    path('admin/requests/reject/<str:maYC>/', views.reject_request, name='admin-reject-request'),
+
+    # Chức năng của Nhân viên
+    path('staff/requests/create/', views.create_request, name='staff-create-request'),
+    path('staff/requests/', views.list_my_requests, name='staff-list-requests'),
+]

@@ -20,7 +20,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'QuanLyThietBi',
+    'rest_framework',
+    'QuanLyThietBi.apps.QuanLyThietBiConfig',
 ]
 
 MIDDLEWARE = [
@@ -58,7 +59,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'quanlythietbi',
         'USER': 'root',
-        'PASSWORD': '12345678',
+        'PASSWORD': 'KhuongNguyen03',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
