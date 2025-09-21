@@ -132,6 +132,8 @@ def reject_request(request, maYC):
         request_obj = YeuCau.objects.get(maYC=maYC)
         reject_status = TrangThaiYC.objects.get(tenTT='reject')
         request_obj.ttYeuCau = reject_status
+        free_status = TrangThaiTB.objects.get(tenTT='free')
+        request_obj.maTB.ttThietBi = free_status
         request_obj.save()
         return Response({'message': f'Yêu cầu {maYC} đã bị từ chối.'}, status=status.HTTP_200_OK)
     except YeuCau.DoesNotExist:
@@ -149,7 +151,7 @@ def create_request(request):
     data = request.data
     ma_thiet_bi = data.get('maTB')
     # Hardcode maNV là NV0001
-    ma_nhan_vien = 'NV0001'
+    ma_nhan_vien = data.get('maNV')
 
     try:
         device = ThietBi.objects.get(maTB=ma_thiet_bi)
